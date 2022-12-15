@@ -3,16 +3,28 @@ plugins {
     id 'io.quarkus'
 }
 
+def props = new Properties()
+file(".env").withInputStream { props.load(it) }
+
 repositories {
     mavenCentral()
     mavenLocal()
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/wearenotch/notch-shell-utils")
+        credentials {
+            username = System.getenv("gh_username") ?: props.getProperty("gh_username")
+            password = System.getenv("gh_token") ?: props.getProperty("gh_token")
+        }
+    }
 }
 
 dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-picocli'
     implementation 'io.quarkus:quarkus-arc'
-    
+    implementation "com.notch.utils:notch-shell-utils:0.1.1"
+
     testImplementation 'io.quarkus:quarkus-junit5'
 }
 
@@ -34,4 +46,10 @@ compileJava {
 
 compileTestJava {
     options.encoding = 'UTF-8'
+}
+
+quarkusBuild {
+    nativeArgs {
+        additionalBuildArgs="--initialize-at-run-time=org.jline.terminal.impl.jna.win"
+    }
 }
